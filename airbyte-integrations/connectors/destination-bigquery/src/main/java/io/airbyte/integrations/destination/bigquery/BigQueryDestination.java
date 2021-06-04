@@ -76,6 +76,8 @@ public class BigQueryDestination implements Destination {
   static final String CONFIG_DATASET_ID = "dataset_id";
   static final String CONFIG_PROJECT_ID = "project_id";
   static final String CONFIG_CREDS = "credentials_json";
+  static final String CONFIG_AUTHENTICATION_METHOD = "authentication_method";
+  static final String CREDENTIALS_AUTHENTICATION_METHOD = "Service Account JSON Credentials";
 
   static final com.google.cloud.bigquery.Schema SCHEMA = com.google.cloud.bigquery.Schema.of(
       Field.of(JavaBaseConstants.COLUMN_NAME_AB_ID, StandardSQLTypeName.STRING),
@@ -128,17 +130,23 @@ public class BigQueryDestination implements Destination {
 
   private BigQuery getBigQuery(JsonNode config) {
     final String projectId = config.get(CONFIG_PROJECT_ID).asText();
-    // handle the credentials json being passed as a json object or a json object already serialized as
-    // a string.
-    final String credentialsString =
-        config.get(CONFIG_CREDS).isObject() ? Jsons.serialize(config.get(CONFIG_CREDS)) : config.get(CONFIG_CREDS).asText();
-    try {
-      final ServiceAccountCredentials credentials = ServiceAccountCredentials
-          .fromStream(new ByteArrayInputStream(credentialsString.getBytes(Charsets.UTF_8)));
+    final String authenticationMethod = config.get(CONFIG_AUTHENTICATION_METHOD).asText();
 
-      return BigQueryOptions.newBuilder()
+    try {
+      Builder bigQueryBuilder = BigQueryOptions.newBuilder();
+      if (CREDENTIALS_AUTHENTICATION_METHOD.equals(authenticationMethod)) {
+        // handle the credentials json being passed as a json object or a json object already serialized as
+        // a string.
+        final String credentialsString =
+                config.get(CONFIG_CREDS).isObject() ? Jsons.serialize(config.get(CONFIG_CREDS)) : config.get(CONFIG_CREDS).asText();
+        final ServiceAccountCredentials credentials = ServiceAccountCredentials
+                .fromStream(new ByteArrayInputStream(credentialsString.getBytes(Charsets.UTF_8)));
+
+        bigQueryBuilder.setCredentials(credentials);
+      }
+
+      return bigQueryBuilder
           .setProjectId(projectId)
-          .setCredentials(credentials)
           .build()
           .getService();
     } catch (IOException e) {

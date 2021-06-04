@@ -8,7 +8,7 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "BigQuery Destination Spec",
     "type": "object",
-    "required": ["project_id", "dataset_id", "credentials_json"],
+    "required": ["project_id", "dataset_id", "authentication_method"],
     "additionalProperties": false,
     "properties": {
       "project_id": {
@@ -20,6 +20,16 @@
         "type": "string",
         "description": "Default BigQuery Dataset ID tables are replicated to if the source does not specify a namespace.",
         "title": "Default Dataset ID"
+      },
+      "authentication_method": {
+        "type": "string",
+        "description": "Whether or not to do authentication.",
+        "title": "Authentication Method",
+        "default": "Service Account JSON Credentials",
+        "enum": [
+          "Default Authentication",
+          "Service Account JSON Credentials"
+        ]
       },
       "credentials_json": {
         "type": "string",
@@ -34,6 +44,24 @@
         "title": "Basic Normalization",
         "examples": [true, false]
       }
-    }
+    },
+    "anyOf": [
+      {
+        "properties": {
+          "authentication_method": { "const": "Service Account JSON Credentials" },
+          "required": ["authentication_method"]
+        },
+        "required": ["credentials_json"]
+      },
+      {
+        "if": {
+          "properties": { "authentication_method": { "const": "Default Authentication" } },
+          "required": ["authentication_method"]
+        },
+        "then": {
+          "properties": { "credentials_json": { "readOnly": true } }
+        }
+      }
+    ]
   }
 }

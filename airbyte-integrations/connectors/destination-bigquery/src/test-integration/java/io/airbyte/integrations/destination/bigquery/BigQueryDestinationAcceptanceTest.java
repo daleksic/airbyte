@@ -69,6 +69,7 @@ public class BigQueryDestinationAcceptanceTest extends DestinationAcceptanceTest
   private static final String CONFIG_DATASET_ID = "dataset_id";
   private static final String CONFIG_PROJECT_ID = "project_id";
   private static final String CONFIG_CREDS = "credentials_json";
+  private static final String CONFIG_AUTHENTICATION_METHOD = "authentication_method";
 
   private BigQuery bigquery;
   private Dataset dataset;
@@ -185,10 +186,12 @@ public class BigQueryDestinationAcceptanceTest extends DestinationAcceptanceTest
     final String projectId = credentialsJson.get(CONFIG_PROJECT_ID).asText();
 
     final String datasetId = "airbyte_tests_" + RandomStringUtils.randomAlphanumeric(8);
+    final String authenticationMethod = "Service Account JSON Credentials";
     config = Jsons.jsonNode(ImmutableMap.builder()
         .put(CONFIG_PROJECT_ID, projectId)
         .put(CONFIG_CREDS, credentialsJsonString)
         .put(CONFIG_DATASET_ID, datasetId)
+        .put(CONFIG_AUTHENTICATION_METHOD, authenticationMethod)
         .build());
 
     final ServiceAccountCredentials credentials =
